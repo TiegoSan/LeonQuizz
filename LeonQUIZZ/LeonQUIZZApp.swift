@@ -7,4 +7,11 @@
 
 import SwiftUI
 
-@main struct LeonQuizApp: App { var body: some Scene { WindowGroup { HomeView() } } }
+@main
+struct LeonQuizApp: App {
+    var body: some Scene {
+        WindowGroup {
+            HomeView()
+        }
+    }
+}

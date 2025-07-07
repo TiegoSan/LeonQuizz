@@ -1,15 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-@main
-struct QuizApp: App {
-    var body: some Scene {
-        WindowGroup {
-            HomeView()
-        }
-    }
-}
-
 struct HomeView: View {
     var body: some View {
         NavigationView {
