@@ -29,6 +29,11 @@ struct ContentView: View {
     @State private var estQuestionChiffre: Bool = false
     @State private var estQuestionLettre: Bool = false
     @State private var score: Int = 0
+    @State private var questionIndex: Int = 0
+    @State private var showScoreSheet: Bool = false
+    @State private var geometrySize: CGSize = .zero
+
+    let totalQuestions = 10
     @State private var formesAffichees: [(String, Color)] = []
     @State private var chiffresAffiches: [(String, Color)] = []
     @State private var positions: [CGPoint] = []
@@ -128,6 +133,8 @@ struct ContentView: View {
                             Spacer()
                             Text("Score: \(score)")
                                 .font(.headline)
+                            Text("Question \(questionIndex)/\(totalQuestions)")
+                                .font(.subheadline)
                                 .padding(.bottom, 10)
                         }
                     }
@@ -136,7 +143,18 @@ struct ContentView: View {
             }
             .onAppear {
                 setupAudioEngine()
+                geometrySize = geo.size
                 nouvelleQuestion(size: geo.size)
+            }
+            .alert("Quiz terminé !", isPresented: $showScoreSheet) {
+                Button("Recommencer") {
+                    questionIndex = 0
+                    score = 0
+                    afficherReponse = false
+                    nouvelleQuestion(size: geometrySize)
+                }
+            } message: {
+                Text("Votre score est \(score)/\(totalQuestions)")
             }
         }
     }
@@ -231,6 +249,12 @@ struct ContentView: View {
     }
 
     func nouvelleQuestion(size: CGSize) {
+        geometrySize = size
+        if questionIndex == totalQuestions {
+            showScoreSheet = true
+            return
+        }
+        questionIndex += 1
         peutRepondre = false
 
         switch mode {
