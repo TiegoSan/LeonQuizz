@@ -126,12 +126,12 @@ struct ContentView: View {
 
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
+                    .onAppear {
+                        setupAudioEngine()
+                        geometrySize = geo.size
+                        nouvelleQuestion(size: geo.size)
+                    }
                 }
-            }
-            .onAppear {
-                setupAudioEngine()
-                geometrySize = geo.size
-                nouvelleQuestion(size: geo.size)
             }
             .alert("Quiz terminé !", isPresented: $showScoreSheet) {
                 Button("Recommencer") {
