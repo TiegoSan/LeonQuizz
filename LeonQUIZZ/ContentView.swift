@@ -227,24 +227,40 @@ struct ContentView: View {
     func verifierReponseForme(couleur: Color, forme: String) {
         let bonne = (forme == questionForme && couleur == questionCouleur)
         score += bonne ? 1 : -1
-        texteReponse = bonne ? "OUI" : "NON"
-        sonReponse = bonne ? "bravo" : "non"
+        if bonne {
+            texteReponse = "OUI"
+            sonReponse = "bravo"
+        } else {
+            let nomCouleur = nomDeCouleur(couleur: questionCouleur)
+            texteReponse = "NON\n\(questionForme) \(nomCouleur)"
+            sonReponse = "non"
+        }
         afficherReponse = true
     }
 
     func verifierReponseChiffre(chiffre: Int) {
         let bonne = (chiffre == questionChiffre)
         score += bonne ? 1 : -1
-        texteReponse = bonne ? "OUI" : "NON"
-        sonReponse = bonne ? "bravo" : "non"
+        if bonne {
+            texteReponse = "OUI"
+            sonReponse = "bravo"
+        } else {
+            texteReponse = "NON\n\(questionChiffre)"
+            sonReponse = "non"
+        }
         afficherReponse = true
     }
 
     func verifierReponseLettre(lettre: String) {
         let bonne = (lettre == questionLettre)
         score += bonne ? 1 : -1
-        texteReponse = bonne ? "OUI" : "NON"
-        sonReponse = bonne ? "bravo" : "non"
+        if bonne {
+            texteReponse = "OUI"
+            sonReponse = "bravo"
+        } else {
+            texteReponse = "NON\n\(questionLettre)"
+            sonReponse = "non"
+        }
         afficherReponse = true
     }
 
