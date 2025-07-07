@@ -42,10 +42,10 @@ struct ContentView: View {
     @State private var pitchEffect = AVAudioUnitTimePitch()
     @State private var audioPlayerNode = AVAudioPlayerNode()
 
-    @State private var afficherReponse: Bool = false
-    @State private var texteReponse: String = ""
-    @State private var sonReponse: String = ""
     @State private var peutRepondre: Bool = false
+    @State private var correctIndex: Int? = nil
+    @State private var blinking: Bool = false
+    @State private var blink: Bool = false
 
     let couleurs: [Color] = [.red, .blue, .green, .yellow, .orange, .purple]
     let formes: [String] = ["Cercle", "Carré", "Triangle"]
@@ -56,21 +56,11 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                if afficherReponse {
-                    Text(texteReponse)
-                        .font(.largeTitle)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onAppear {
-                            jouerSonAvecPitch(nomFichier: sonReponse)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                afficherReponse = false
-                                nouvelleQuestion(size: geo.size)
-                            }
-                        }
-                } else {
                     ZStack {
                         VStack {
                             HStack {
+                                Text("Score: \(score)")
+                                    .font(.headline)
                                 Spacer()
                                 Button("Répéter") {
                                     repeterDerniereQuestion()
@@ -81,10 +71,13 @@ struct ContentView: View {
                                 .foregroundColor(.black)
                                 .font(.headline)
                                 .cornerRadius(12)
-                                .padding(.top, 40)
-                                .padding(.trailing, 20)
                             }
+                            .padding(.top, 40)
+                            .padding(.horizontal, 20)
                             Spacer()
+                            Text("Question \(questionIndex)/\(totalQuestions)")
+                                .font(.subheadline)
+                                .padding(.bottom, 10)
                         }
 
                         ForEach(Array(chiffresAffiches.enumerated()), id: \.offset) { index, pair in
@@ -109,6 +102,7 @@ struct ContentView: View {
                                         .foregroundColor(.white)
                                         .cornerRadius(12)
                                 }
+                                .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
                                 .position(pos)
                             }
                         }
@@ -125,18 +119,11 @@ struct ContentView: View {
                                     formeView(forme: forme, couleur: couleur)
                                         .frame(width: tailleForme, height: tailleForme)
                                 }
+                                .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
                                 .position(pos)
                             }
                         }
 
-                        VStack {
-                            Spacer()
-                            Text("Score: \(score)")
-                                .font(.headline)
-                            Text("Question \(questionIndex)/\(totalQuestions)")
-                                .font(.subheadline)
-                                .padding(.bottom, 10)
-                        }
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
                 }
@@ -150,7 +137,6 @@ struct ContentView: View {
                 Button("Recommencer") {
                     questionIndex = 0
                     score = 0
-                    afficherReponse = false
                     nouvelleQuestion(size: geometrySize)
                 }
             } message: {
@@ -226,46 +212,32 @@ struct ContentView: View {
 
     func verifierReponseForme(couleur: Color, forme: String) {
         let bonne = (forme == questionForme && couleur == questionCouleur)
+        peutRepondre = false
         score += bonne ? 1 : -1
-        if bonne {
-            texteReponse = "OUI"
-            sonReponse = "bravo"
-        } else {
-            let nomCouleur = nomDeCouleur(couleur: questionCouleur)
-            texteReponse = "NON\n\(questionForme) \(nomCouleur)"
-            sonReponse = "non"
-        }
-        afficherReponse = true
+        jouerSonAvecPitch(nomFichier: bonne ? "bravo" : "non")
+        startBlinking()
     }
 
     func verifierReponseChiffre(chiffre: Int) {
         let bonne = (chiffre == questionChiffre)
+        peutRepondre = false
         score += bonne ? 1 : -1
-        if bonne {
-            texteReponse = "OUI"
-            sonReponse = "bravo"
-        } else {
-            texteReponse = "NON\n\(questionChiffre)"
-            sonReponse = "non"
-        }
-        afficherReponse = true
+        jouerSonAvecPitch(nomFichier: bonne ? "bravo" : "non")
+        startBlinking()
     }
 
     func verifierReponseLettre(lettre: String) {
         let bonne = (lettre == questionLettre)
+        peutRepondre = false
         score += bonne ? 1 : -1
-        if bonne {
-            texteReponse = "OUI"
-            sonReponse = "bravo"
-        } else {
-            texteReponse = "NON\n\(questionLettre)"
-            sonReponse = "non"
-        }
-        afficherReponse = true
+        jouerSonAvecPitch(nomFichier: bonne ? "bravo" : "non")
+        startBlinking()
     }
 
     func nouvelleQuestion(size: CGSize) {
         geometrySize = size
+        blinking = false
+        blink = false
         if questionIndex == totalQuestions {
             showScoreSheet = true
             return
@@ -299,6 +271,7 @@ struct ContentView: View {
                 set.insert(chiffres.randomElement()!)
             }
             chiffresAffiches = Array(set).shuffled().map { (String($0), couleurs.randomElement()!) }
+            correctIndex = chiffresAffiches.firstIndex(where: { Int($0.0)! == questionChiffre })
             lireQuestionChiffre(chiffre: questionChiffre)
         } else if estQuestionLettre {
             questionLettre = lettres.randomElement()!
@@ -308,6 +281,7 @@ struct ContentView: View {
                 set.insert(lettres.randomElement()!)
             }
             chiffresAffiches = Array(set).shuffled().map { ($0, couleurs.randomElement()!) }
+            correctIndex = chiffresAffiches.firstIndex(where: { $0.0 == questionLettre })
             lireQuestionLettre(lettre: questionLettre)
         } else {
             questionCouleur = couleurs.randomElement()!
@@ -321,6 +295,7 @@ struct ContentView: View {
                 set.insert(FormeCouleur(forme: f, couleurNom: nomDeCouleur(couleur: c)))
             }
             formesAffichees = set.map { ($0.forme, couleurDepuisNom(nom: $0.couleurNom)) }.shuffled()
+            correctIndex = formesAffichees.firstIndex(where: { $0.0 == questionForme && $0.1 == questionCouleur })
             lireQuestionForme(forme: questionForme, couleur: nomDeCouleur(couleur: questionCouleur))
         }
     }
@@ -375,6 +350,19 @@ struct ContentView: View {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             peutRepondre = true
+        }
+    }
+
+    func startBlinking() {
+        blinking = true
+        blink = false
+        withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+            blink = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            blinking = false
+            blink = false
+            nouvelleQuestion(size: geometrySize)
         }
     }
 }
