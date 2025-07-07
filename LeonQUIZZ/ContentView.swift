@@ -143,7 +143,6 @@ struct ContentView: View {
                 Text("Votre score est \(score)/\(totalQuestions)")
             }
         }
-    }
 
     func formeView(forme: String, couleur: Color) -> some View {
         Group {
