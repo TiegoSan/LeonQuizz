@@ -35,6 +35,8 @@
 		1304C6082E11A38C003BECC3 /* q.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 1304C5E52E11A38C003BECC3 /* q.m4a */; };
 		1304C60C2E11A7F1003BECC3 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1304C60B2E11A7EA003BECC3 /* HomeView.swift */; };
 		13C3F9B32CC54E430004F890 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C3F9B22CC54E430004F890 /* ContentView.swift */; };
+                                13C3F9B12CC54E430004F890 /* LeonQUIZZApp.swift in Sources */,
+                13C3F9B12CC54E430004F890 /* LeonQUIZZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C3F9B02CC54E430004F890 /* LeonQUIZZApp.swift */; }
 		13C3F9B52CC54E470004F890 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13C3F9B42CC54E470004F890 /* Assets.xcassets */; };
 		13C3F9B82CC54E470004F890 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13C3F9B72CC54E470004F890 /* Preview Assets.xcassets */; };
 		13C70DDF2CC58D5400A189F2 /* bleu.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 13C70DD82CC58BA600A189F2 /* bleu.m4a */; };
@@ -90,6 +92,7 @@
 		1304C5EE2E11A38C003BECC3 /* z.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = z.m4a; sourceTree = "<group>"; };
 		1304C60B2E11A7EA003BECC3 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		13C3F9AD2CC54E430004F890 /* LeonQUIZZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LeonQUIZZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
+                13C3F9B02CC54E430004F890 /* LeonQUIZZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeonQUIZZApp.swift; sourceTree = "<group>"; };
 		13C3F9B22CC54E430004F890 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		13C3F9B42CC54E470004F890 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		13C3F9B72CC54E470004F890 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -116,6 +119,7 @@
 		13C70DF52CC5940200A189F2 /* 9.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = 9.m4a; sourceTree = "<group>"; };
 		13C70DF62CC5940200A189F2 /* 1.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = 1.m4a; sourceTree = "<group>"; };
 		13DE56072CC56B1900DE64D5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+                                13C3F9B02CC54E430004F890 /* LeonQUIZZApp.swift */,
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +175,7 @@
 				13C70DDC2CC58BA700A189F2 /* vert.m4a */,
 				13C70DDD2CC58BA700A189F2 /* violet.m4a */,
 				13DE56072CC56B1900DE64D5 /* Info.plist */,
+                                13C3F9B02CC54E430004F890 /* LeonQUIZZApp.swift */,
 				13C3F9B22CC54E430004F890 /* ContentView.swift */,
 				1304C60B2E11A7EA003BECC3 /* HomeView.swift */,
 				13C3F9B42CC54E470004F890 /* Assets.xcassets */,
@@ -333,6 +338,7 @@
 			files = (
 				1304C60C2E11A7F1003BECC3 /* HomeView.swift in Sources */,
 				13C3F9B32CC54E430004F890 /* ContentView.swift in Sources */,
+                                13C3F9B12CC54E430004F890 /* LeonQUIZZApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
