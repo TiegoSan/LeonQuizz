@@ -1,15 +1,6 @@
 import SwiftUI
 import AVFoundation
 
-@main
-struct QuizApp: App {
-    var body: some Scene {
-        WindowGroup {
-            HomeView()
-        }
-    }
-}
-
 struct HomeView: View {
     var body: some View {
         NavigationView {
@@ -19,7 +10,7 @@ struct HomeView: View {
                     .foregroundStyle(
                         LinearGradient(colors: [.red, .orange, .yellow, .green, .blue, .purple], startPoint: .leading, endPoint: .trailing)
                     )
-                    .padding(.top, 50)
+                    .padding(.top, 20)
 
                 Spacer()
 
@@ -36,7 +27,11 @@ struct HomeView: View {
                     NavigationLink(destination: ContentView(mode: .mix)) {
                         MenuButtonView(title: "🎲 Mélange")
                     }
+                    NavigationLink(destination: ContentView(mode: .personnages)) {
+                        MenuButtonView(title: "🧑‍🎤 Personnages")
+                    }
                 }
+                .padding(.bottom, 24)
 
                 Spacer()
             }
@@ -69,5 +64,5 @@ struct MenuButtonView: View {
 }
 
 enum QuizMode {
-    case formes, chiffres, lettres, mix
+    case formes, chiffres, lettres, mix, personnages
 }

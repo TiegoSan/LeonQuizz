@@ -26,8 +26,10 @@ struct ContentView: View {
     @State private var questionForme: String = "Cercle"
     @State private var questionChiffre: Int = 1
     @State private var questionLettre: String = "A"
+    @State private var questionPersonnage: String = "totoro"
     @State private var estQuestionChiffre: Bool = false
     @State private var estQuestionLettre: Bool = false
+    @State private var estQuestionPersonnage: Bool = false
     @State private var score: Int = 0
     @State private var questionIndex: Int = 0
     @State private var showScoreSheet: Bool = false
@@ -46,12 +48,19 @@ struct ContentView: View {
     @State private var correctIndex: Int? = nil
     @State private var blinking: Bool = false
     @State private var blink: Bool = false
+    private let speechSynth = AVSpeechSynthesizer()
 
     let couleurs: [Color] = [.red, .blue, .green, .yellow, .orange, .purple]
     let formes: [String] = ["Cercle", "Carré", "Triangle"]
     let chiffres: [Int] = Array(1...9)
     let lettres: [String] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map { String($0) }
+    let personnages: [String] = [
+        "totoro", "chihiro", "ponyo", "kiki", "jiji", "calcifer", "howl", "san", "haku",
+        "sheeta", "kaguya", "sosuke", "the_mask", "chat_bus", "satsuki", "mei",
+        "singe_better_man", "sony_hayes"
+    ]
     let tailleForme: CGFloat = 100
+    let taillePersonnage: CGFloat = 180
 
     var body: some View {
         GeometryReader { geo in
@@ -72,16 +81,16 @@ struct ContentView: View {
                                 .font(.headline)
                                 .cornerRadius(12)
                             }
-                            .padding(.top, 40)
+                            .padding(.top, 2)
                             .padding(.horizontal, 20)
                             Spacer()
                             Text("Question \(questionIndex)/\(totalQuestions)")
                                 .font(.subheadline)
-                                .padding(.bottom, 10)
+                                .padding(.bottom, 36)
                         }
 
                         ForEach(Array(chiffresAffiches.enumerated()), id: \.offset) { index, pair in
-                            if positions.indices.contains(index) {
+                            if positions.indices.contains(index) && (estQuestionChiffre || estQuestionLettre || estQuestionPersonnage) {
                                 let pos = positions[index]
                                 let valeur = pair.0
                                 let fond = pair.1
@@ -92,15 +101,21 @@ struct ContentView: View {
                                             verifierReponseChiffre(chiffre: Int(valeur)!)
                                         } else if estQuestionLettre {
                                             verifierReponseLettre(lettre: valeur)
+                                        } else if estQuestionPersonnage {
+                                            verifierReponsePersonnage(personnage: valeur)
                                         }
                                     }
                                 }) {
-                                    Text(valeur)
-                                        .font(.system(size: 40, weight: .bold))
-                                        .frame(width: tailleForme, height: tailleForme)
+                                    if estQuestionPersonnage {
+                                        personnageView(nom: valeur, fond: fond)
+                                    } else {
+                                        Text(valeur)
+                                            .font(.system(size: 40, weight: .bold))
+                                        .frame(width: estQuestionPersonnage ? taillePersonnage : tailleForme, height: estQuestionPersonnage ? taillePersonnage : tailleForme)
                                         .background(fond.opacity(0.9))
                                         .foregroundColor(.white)
                                         .cornerRadius(12)
+                                    }
                                 }
                                 .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
                                 .position(pos)
@@ -108,7 +123,7 @@ struct ContentView: View {
                         }
 
                         ForEach(Array(formesAffichees.enumerated()), id: \.offset) { index, item in
-                            if positions.indices.contains(index) && !estQuestionChiffre && !estQuestionLettre {
+                            if positions.indices.contains(index) && !estQuestionChiffre && !estQuestionLettre && !estQuestionPersonnage {
                                 let pos = positions[index]
                                 let (forme, couleur) = item
                                 Button(action: {
@@ -126,22 +141,23 @@ struct ContentView: View {
 
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
+                    .onAppear {
+                        setupAudioEngine()
+                        geometrySize = geo.size
+                        nouvelleQuestion(size: geo.size)
+                    }
+                    .alert("Quiz terminé !", isPresented: $showScoreSheet) {
+                        Button("Recommencer") {
+                            questionIndex = 0
+                            score = 0
+                            nouvelleQuestion(size: geometrySize)
+                        }
+                    } message: {
+                        Text("Votre score est \(score)/\(totalQuestions)")
+                    }
                 }
             }
-            .onAppear {
-                setupAudioEngine()
-                geometrySize = geo.size
-                nouvelleQuestion(size: geo.size)
-            }
-            .alert("Quiz terminé !", isPresented: $showScoreSheet) {
-                Button("Recommencer") {
-                    questionIndex = 0
-                    score = 0
-                    nouvelleQuestion(size: geometrySize)
-                }
-            } message: {
-                Text("Votre score est \(score)/\(totalQuestions)")
-            }
+            .navigationBarHidden(true)
         }
 
     func formeView(forme: String, couleur: Color) -> some View {
@@ -154,6 +170,28 @@ struct ContentView: View {
                 TriangleShape().fill(couleur)
             }
         }
+    }
+
+    func personnageView(nom: String, fond: Color) -> some View {
+        ZStack(alignment: .bottom) {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(fond.opacity(0.9))
+                .frame(width: taillePersonnage, height: taillePersonnage)
+            Image(nom)
+                .resizable()
+                .scaledToFill()
+                .frame(width: taillePersonnage, height: taillePersonnage)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            Text(nomAffichagePersonnage(nom))
+                .font(.caption2.bold())
+                .foregroundColor(.white)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(.black.opacity(0.5))
+                .cornerRadius(6)
+                .padding(.bottom, 4)
+        }
+        .frame(width: taillePersonnage, height: taillePersonnage)
     }
 
     func setupAudioEngine() {
@@ -180,8 +218,20 @@ struct ContentView: View {
             lireQuestionChiffre(chiffre: questionChiffre)
         } else if estQuestionLettre {
             lireQuestionLettre(lettre: questionLettre)
+        } else if estQuestionPersonnage {
+            lireQuestionPersonnage(personnage: questionPersonnage)
         } else {
             lireQuestionForme(forme: questionForme, couleur: nomDeCouleur(couleur: questionCouleur))
+        }
+    }
+
+    func nomAffichagePersonnage(_ id: String) -> String {
+        switch id {
+        case "the_mask": return "The Mask"
+        case "chat_bus": return "Chat Bus"
+        case "singe_better_man": return "Singe Better Man"
+        case "sony_hayes": return "Sony Hayes"
+        default: return id.replacingOccurrences(of: "_", with: " ").capitalized
         }
     }
 
@@ -233,6 +283,14 @@ struct ContentView: View {
         startBlinking()
     }
 
+    func verifierReponsePersonnage(personnage: String) {
+        let bonne = (personnage == questionPersonnage)
+        peutRepondre = false
+        score += bonne ? 1 : -1
+        jouerSonAvecPitch(nomFichier: bonne ? "bravo" : "non")
+        startBlinking()
+    }
+
     func nouvelleQuestion(size: CGSize) {
         geometrySize = size
         blinking = false
@@ -248,16 +306,24 @@ struct ContentView: View {
         case .chiffres:
             estQuestionChiffre = true
             estQuestionLettre = false
+            estQuestionPersonnage = false
         case .lettres:
             estQuestionChiffre = false
             estQuestionLettre = true
+            estQuestionPersonnage = false
         case .formes:
             estQuestionChiffre = false
             estQuestionLettre = false
+            estQuestionPersonnage = false
         case .mix:
             let tirage = Int.random(in: 0...2)
             estQuestionChiffre = (tirage == 0)
             estQuestionLettre = (tirage == 1)
+            estQuestionPersonnage = false
+        case .personnages:
+            estQuestionChiffre = false
+            estQuestionLettre = false
+            estQuestionPersonnage = true
         }
 
         positions = genererPositionsAleatoires(size: size)
@@ -282,6 +348,16 @@ struct ContentView: View {
             chiffresAffiches = Array(set).shuffled().map { ($0, couleurs.randomElement()!) }
             correctIndex = chiffresAffiches.firstIndex(where: { $0.0 == questionLettre })
             lireQuestionLettre(lettre: questionLettre)
+        } else if estQuestionPersonnage {
+            questionPersonnage = personnages.randomElement()!
+            var set = Set<String>()
+            set.insert(questionPersonnage)
+            while set.count < 9 {
+                set.insert(personnages.randomElement()!)
+            }
+            chiffresAffiches = Array(set).shuffled().map { ($0, couleurs.randomElement()!) }
+            correctIndex = chiffresAffiches.firstIndex(where: { $0.0 == questionPersonnage })
+            lireQuestionPersonnage(personnage: questionPersonnage)
         } else {
             questionCouleur = couleurs.randomElement()!
             questionForme = formes.randomElement()!
@@ -302,16 +378,18 @@ struct ContentView: View {
     func genererPositionsAleatoires(size: CGSize) -> [CGPoint] {
         let cols = 3
         let rows = 3
-        let padding: CGFloat = 60
-        let cellWidth = (size.width - padding * 2) / CGFloat(cols)
-        let cellHeight = (size.height - padding * 2) / CGFloat(rows)
+        let horizontalPadding: CGFloat = 34
+        let topPadding: CGFloat = 64
+        let bottomPadding: CGFloat = 130
+        let cellWidth = (size.width - horizontalPadding * 2) / CGFloat(cols)
+        let cellHeight = (size.height - topPadding - bottomPadding) / CGFloat(rows)
 
         var gridPositions: [CGPoint] = []
 
         for row in 0..<rows {
             for col in 0..<cols {
-                let x = padding + cellWidth * (CGFloat(col) + 0.5)
-                let y = padding + cellHeight * (CGFloat(row) + 0.5)
+                let x = horizontalPadding + cellWidth * (CGFloat(col) + 0.5)
+                let y = topPadding + cellHeight * (CGFloat(row) + 0.5)
                 gridPositions.append(CGPoint(x: x, y: y))
             }
         }
@@ -350,6 +428,23 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             peutRepondre = true
         }
+    }
+
+    func lireQuestionPersonnage(personnage: String) {
+        jouerSonAvecPitch(nomFichier: "ou_est_le")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            dire(nomAffichagePersonnage(personnage))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            peutRepondre = true
+        }
+    }
+
+    func dire(_ texte: String) {
+        let utterance = AVSpeechUtterance(string: texte)
+        utterance.voice = AVSpeechSynthesisVoice(language: "fr-FR")
+        utterance.rate = 0.5
+        speechSynth.speak(utterance)
     }
 
     func startBlinking() {

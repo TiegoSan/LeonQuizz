@@ -20,5 +20,4 @@ LeonQuizz est une application de quiz educatif pour iOS developpee en SwiftUI. E
 2. Compilez puis lancez l'application sur le simulateur ou un appareil iOS.
 3. Choisissez un mode de quiz depuis l'ecran d'accueil et repondez aux questions !
 
-Tous les fichiers audio necessaires se trouvent dans le dossier `LeonQUIZZ`.
-
+Tous les fichiers audio necessaires se trouvent dans le dossier `LeonQUIZZ/Resources/Audio`.
