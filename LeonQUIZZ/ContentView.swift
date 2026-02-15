@@ -21,6 +21,7 @@ struct FormeCouleur: Hashable {
 
 struct ContentView: View {
     let mode: QuizMode
+    @Environment(\.dismiss) private var dismiss
 
     @State private var questionCouleur: Color = .red
     @State private var questionForme: String = "Cercle"
@@ -33,6 +34,7 @@ struct ContentView: View {
     @State private var score: Int = 0
     @State private var questionIndex: Int = 0
     @State private var showScoreSheet: Bool = false
+    @State private var finalScreenBlink: Bool = false
     @State private var geometrySize: CGSize = .zero
 
     let totalQuestions = 10
@@ -52,7 +54,7 @@ struct ContentView: View {
 
     let couleurs: [Color] = [.red, .blue, .green, .yellow, .orange, .purple]
     let formes: [String] = ["Cercle", "Carré", "Triangle"]
-    let chiffres: [Int] = Array(1...9)
+    let chiffres: [Int] = Array(1...29)
     let lettres: [String] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map { String($0) }
     let personnages: [String] = [
         "totoro", "chihiro", "ponyo", "kiki", "jiji", "calcifer", "howl", "san", "haku",
@@ -65,100 +67,164 @@ struct ContentView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                    ZStack {
-                        VStack {
-                            HStack {
-                                Text("Score: \(score)")
-                                    .font(.headline)
-                                Spacer()
-                                Button("Répéter") {
-                                    repeterDerniereQuestion()
+                ZStack {
+                    VStack {
+                        HStack {
+                            Text("Score: \(score)")
+                                .font(.headline)
+                            Spacer()
+                            Button("Répéter") {
+                                repeterDerniereQuestion()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(Color.yellow)
+                            .foregroundColor(.black)
+                            .font(.headline)
+                            .cornerRadius(12)
+                        }
+                        .padding(.top, 2)
+                        .padding(.horizontal, 20)
+                        Spacer()
+                        Text("Question \(questionIndex)/\(totalQuestions)")
+                            .font(.subheadline)
+                            .padding(.bottom, 36)
+                    }
+
+                    ForEach(Array(chiffresAffiches.enumerated()), id: \.offset) { index, pair in
+                        if positions.indices.contains(index) && (estQuestionChiffre || estQuestionLettre || estQuestionPersonnage) {
+                            let pos = positions[index]
+                            let valeur = pair.0
+                            let fond = pair.1
+
+                            Button(action: {
+                                if peutRepondre {
+                                    if estQuestionChiffre {
+                                        verifierReponseChiffre(chiffre: Int(valeur)!)
+                                    } else if estQuestionLettre {
+                                        verifierReponseLettre(lettre: valeur)
+                                    } else if estQuestionPersonnage {
+                                        verifierReponsePersonnage(personnage: valeur)
+                                    }
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
+                            }) {
+                                if estQuestionPersonnage {
+                                    personnageView(nom: valeur, fond: fond)
+                                } else {
+                                    Text(valeur)
+                                        .font(.system(size: 40, weight: .bold))
+                                    .frame(width: estQuestionPersonnage ? taillePersonnage : tailleForme, height: estQuestionPersonnage ? taillePersonnage : tailleForme)
+                                    .background(fond.opacity(0.9))
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                }
+                            }
+                            .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
+                            .position(pos)
+                        }
+                    }
+
+                    ForEach(Array(formesAffichees.enumerated()), id: \.offset) { index, item in
+                        if positions.indices.contains(index) && !estQuestionChiffre && !estQuestionLettre && !estQuestionPersonnage {
+                            let pos = positions[index]
+                            let (forme, couleur) = item
+                            Button(action: {
+                                if peutRepondre {
+                                    verifierReponseForme(couleur: couleur, forme: forme)
+                                }
+                            }) {
+                                formeView(forme: forme, couleur: couleur)
+                                    .frame(width: tailleForme, height: tailleForme)
+                            }
+                            .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
+                            .position(pos)
+                        }
+                    }
+
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            Button("Menu") {
+                                dismiss()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Color.yellow)
+                            .foregroundColor(.black)
+                            .font(.headline)
+                            .cornerRadius(12)
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20)
+                        }
+                    }
+                    .zIndex(2)
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+                .onAppear {
+                    setupAudioEngine()
+                    geometrySize = geo.size
+                    nouvelleQuestion(size: geo.size)
+                }
+
+                if showScoreSheet {
+                    ZStack {
+                        (score >= totalQuestions
+                            ? (finalScreenBlink ? Color.yellow : Color.orange)
+                            : Color.white)
+                            .ignoresSafeArea()
+
+                        VStack(spacing: 24) {
+                            Text("Quiz terminé !")
+                                .font(.system(size: 48, weight: .heavy, design: .rounded))
+                                .multilineTextAlignment(.center)
+
+                            Text("Score \(score)/\(totalQuestions)")
+                                .font(.system(size: 40, weight: .bold, design: .rounded))
+
+                            if score >= totalQuestions {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.white.opacity(0.28))
+                                        .frame(width: 250, height: 250)
+                                    Text("🏆")
+                                        .font(.system(size: 170))
+                                }
+                            }
+
+                            Spacer()
+
+                            HStack {
+                                Spacer()
+                                Button("Menu") {
+                                    dismiss()
+                                }
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 12)
                                 .background(Color.yellow)
                                 .foregroundColor(.black)
                                 .font(.headline)
                                 .cornerRadius(12)
                             }
-                            .padding(.top, 2)
-                            .padding(.horizontal, 20)
-                            Spacer()
-                            Text("Question \(questionIndex)/\(totalQuestions)")
-                                .font(.subheadline)
-                                .padding(.bottom, 36)
                         }
-
-                        ForEach(Array(chiffresAffiches.enumerated()), id: \.offset) { index, pair in
-                            if positions.indices.contains(index) && (estQuestionChiffre || estQuestionLettre || estQuestionPersonnage) {
-                                let pos = positions[index]
-                                let valeur = pair.0
-                                let fond = pair.1
-
-                                Button(action: {
-                                    if peutRepondre {
-                                        if estQuestionChiffre {
-                                            verifierReponseChiffre(chiffre: Int(valeur)!)
-                                        } else if estQuestionLettre {
-                                            verifierReponseLettre(lettre: valeur)
-                                        } else if estQuestionPersonnage {
-                                            verifierReponsePersonnage(personnage: valeur)
-                                        }
-                                    }
-                                }) {
-                                    if estQuestionPersonnage {
-                                        personnageView(nom: valeur, fond: fond)
-                                    } else {
-                                        Text(valeur)
-                                            .font(.system(size: 40, weight: .bold))
-                                        .frame(width: estQuestionPersonnage ? taillePersonnage : tailleForme, height: estQuestionPersonnage ? taillePersonnage : tailleForme)
-                                        .background(fond.opacity(0.9))
-                                        .foregroundColor(.white)
-                                        .cornerRadius(12)
-                                    }
-                                }
-                                .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
-                                .position(pos)
-                            }
-                        }
-
-                        ForEach(Array(formesAffichees.enumerated()), id: \.offset) { index, item in
-                            if positions.indices.contains(index) && !estQuestionChiffre && !estQuestionLettre && !estQuestionPersonnage {
-                                let pos = positions[index]
-                                let (forme, couleur) = item
-                                Button(action: {
-                                    if peutRepondre {
-                                        verifierReponseForme(couleur: couleur, forme: forme)
-                                    }
-                                }) {
-                                    formeView(forme: forme, couleur: couleur)
-                                        .frame(width: tailleForme, height: tailleForme)
-                                }
-                                .opacity(blinking && index == correctIndex && blink ? 0.2 : 1)
-                                .position(pos)
-                            }
-                        }
-
+                        .padding(.horizontal, 24)
+                        .padding(.top, 60)
+                        .padding(.bottom, 20)
                     }
-                    .frame(width: geo.size.width, height: geo.size.height)
                     .onAppear {
-                        setupAudioEngine()
-                        geometrySize = geo.size
-                        nouvelleQuestion(size: geo.size)
-                    }
-                    .alert("Quiz terminé !", isPresented: $showScoreSheet) {
-                        Button("Recommencer") {
-                            questionIndex = 0
-                            score = 0
-                            nouvelleQuestion(size: geometrySize)
+                        if score >= totalQuestions {
+                            finalScreenBlink = false
+                            withAnimation(.easeInOut(duration: 0.35).repeatForever(autoreverses: true)) {
+                                finalScreenBlink = true
+                            }
                         }
-                    } message: {
-                        Text("Votre score est \(score)/\(totalQuestions)")
                     }
+                    .zIndex(10)
                 }
             }
             .navigationBarHidden(true)
         }
+    }
 
     func formeView(forme: String, couleur: Color) -> some View {
         Group {
@@ -296,6 +362,7 @@ struct ContentView: View {
         blinking = false
         blink = false
         if questionIndex == totalQuestions {
+            finalScreenBlink = false
             showScoreSheet = true
             return
         }
@@ -413,7 +480,12 @@ struct ContentView: View {
     func lireQuestionChiffre(chiffre: Int) {
         jouerSonAvecPitch(nomFichier: "ou_est_le")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            jouerSonAvecPitch(nomFichier: "\(chiffre)")
+            let nomFichier = "\(chiffre)"
+            if Bundle.main.url(forResource: nomFichier, withExtension: "m4a") != nil {
+                jouerSonAvecPitch(nomFichier: nomFichier)
+            } else {
+                dire("\(chiffre)")
+            }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             peutRepondre = true
@@ -453,7 +525,7 @@ struct ContentView: View {
         withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
             blink = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             blinking = false
             blink = false
             nouvelleQuestion(size: geometrySize)
